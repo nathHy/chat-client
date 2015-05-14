@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div id="userlist">
+        <h1>Online users</h1>
+        <ul id='online'>
+
+        </ul>
+    </div>
+    <form id='login' action="">
+        <input id="username" autocomplete="off"/><button>Login</button>
+    </form>
+    <div id='chat'>
+        <ul id="messages"></ul>
+        <div id='typingList'>
+        <p><p id='listofusers'></p>typing...</p>
+        </div>
+        <form id='chatinput' action="">
+          <input id="m" autocomplete="off" /><button>Send</button>
+      </form>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+      var socket = io();
+      var username='';
+
+      if (username =='') {
+        console.log('not set');
+        $('#chat').hide();
+    }
+    $('#login').submit(function() {
+        var username=$('#username').val();
+        socket.emit('login', username);
+        $('#username').val('');
+        $('#login').hide();
+        $('#chat').show();
+        return false;
+    });
+    $('#m').keyup(function(){
+        input = $('#m').val()
+        if (input != '') {
+            console.log(input);
+            socket.emit('typing');
+        } else {
+            socket.emit('stoptyping');
+        }
+    });
+
+    socket.on('typing', function(users){
+        console.log("Someone is typing. but who? I think it is " + users);
+        var userlist = '';
+        if (users.length >0)
+            $('#typingList').show();
+        else
+            $('#typingList').hide();
+        for (var i = users.length - 1; i >= 0; i--) {
+            userlist += users[i] + ',';
+        };
+        $('#listofusers').replaceWith(userlist);
+    });
+    $('#chatinput').submit(function() {
+        socket.emit('chat message', $('#m').val());
+        $('#m').val('');
+        return false;
+    });
+    socket.on('chat message', function(msg){
+        $('#messages').append($('<li>').text(msg));
+    });
+    socket.on('login', function(msg){
+        $('#messages').append($('<li>').text(msg));
+        $('#messages').animate({
+            scrollTop: $('#messages').scrollHeight
+        },300);
+    });
+    socket.on('users',function(list){
+        console.log('Updating online users');
+        $('#online li').remove();
+        for (var i = list.length - 1; i >= 0; i--) {
+            var text = '<a href="test"> <li>' + list[i]['username'] + '</li></a>';
+            console.log(text);
+            $('#online').append(text);
+        };
+    });
+
+    input=$('#m').val();
+    console.log(input);
+</script>
+</body>
+</html>
