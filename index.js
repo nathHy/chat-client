@@ -3,7 +3,6 @@
 // ^^ has history along with colours. 
 // http://www.tamas.io/further-additions-to-the-node-jssocket-io-chat-app/
 // 
-
 var app = require('express')();
 var express = require('express');
 var http = require('http').Server(app);
@@ -11,8 +10,9 @@ var io = require('socket.io')(http);
 var path = require('path')
 var fs = require('fs');
 
-app.get('/', function(req, res){
-	res.sendfile('index.html');
+app.get('/', function(req, res)
+{
+	res.sendfile('public/index.html');
 });
 
 // app.get('/user.html',function(req,res){
@@ -21,62 +21,88 @@ app.get('/', function(req, res){
 app.use(express.static(path.join(__dirname, 'public')));
 // app.use(express.static(path.join(__dirname, 'public')));
 
-var clients=[];
-var usersTypingById={};
+http.listen(3000, function()
+{
+	console.log('listening on *:3000');
+});
+
+
+var clients = [];
+var usersTypingById = {};
 var usersTypingByName = [];
 
 
 var history = [];
 
-var colours=['red','blue','green','yellow','cyan','pink'];
+var colours = ['red', 'blue', 'green', 'yellow', 'cyan', 'pink'];
 
 
-io.on('connection', function(socket){
+io.on('connection', function(socket)
+{
 	console.log('a user connected');
-	fs.readFile('/home/user/chatclient/logs/mainChat.log',function read(err,data){
-		if (err){
-			return console.log(err);
-		}
-		var history = data;
-		// console.log(history);
-		socket.emit('send history',history)
-	})
+	// fs.readFile('/home/user/chatclient/logs/mainChat.log',function read(err,data){
+	// 	if (err){
+	// 		return console.log(err);
+	// 	}
+	// 	var history = data;
+	// socket.emit('send history',history)
 
 
-	socket.on('disconnect', function() { 
+	socket.on('disconnect', function()
+	{
 		client = getClient(socket.id);
 		console.log('user disconnected');
 		var obj = {
-			type:'system',
+			type: 'system',
 			time: (new Date().toString()),
-			text:'Goodbye ',
-			author:client.username,
-			colour:client.colour
+			text: 'Goodbye ',
+			author: client.username,
+			colour: client.colour,
+			textColour:'black'
 		};
 		io.emit('chat message', obj);
-		for (var i = clients.length - 1; i >= 0; i--) {
-			if (clients[i]['id'] == socket.id) {
-				clients.splice(i,1);
-				io.emit('users',clients);
+		for (var i = clients.length - 1; i >= 0; i--)
+		{
+			if (clients[i]['id'] == socket.id)
+			{
+				clients.splice(i, 1); // remove user that is leaving
+				io.emit('users', clients); // update all online clients
 				return false;
 			}
 		};
 	});
 
 
-	socket.on('chat message', function(msg){
+	socket.on('chat message', function(msg)
+	{
 		// msg = getClient(socket.id)['username'] + ':' + msg;
 		var user = getClient(socket.id);
-		if (msg == '') {
+		if (msg == '')
+		{
 			return false;
 		}
+
+		if (msg.indexOf("W:") == 0 ) {
+			croppedMsg = msg.slice(msg.search(/\s/)+1);
+			var obj = {
+				type: 'private message',
+				time: (new Date().toString()),
+				text: croppedMsg,
+				author: user['username'],
+				colour: user['colour'],
+				textColour: 'rgb(242,0,255)'
+			};
+		} else {
+
 		var obj = {
-			type:'message',
+			type: 'message',
 			time: (new Date().toString()),
-			text:msg,
-			author:user['username'],
-			colour:user['colour']
+			text: msg,
+			author: user['username'],
+			colour: user['colour'],
+			textColour:'black'
 		};
+	}
 		history.push(obj);
 		history = history.slice(-100);
 		console.log('sending msg');
@@ -91,74 +117,99 @@ io.on('connection', function(socket){
 	});
 
 
-	socket.on('login',function(user){
+	socket.on('login', function(user)
+	{
 		console.log('login is : ' + user + ' with socket id ' + socket.id);
 		colour = colours.shift();
 		colours.push(colour);
-		client={
-			id:socket.id,
-			username:user,
-			typing:false,
-			colour:colour
+		client = {
+			id: socket.id,
+			username: user,
+			typing: false,
+			colour: colour
 		};
 		clients.push(client);
 		var obj = {
-			type:'system',
+			type: 'system',
 			time: (new Date().toString()),
-			text:'Welcome',
-			author:client.username,
-			colour:client.colour
+			text: 'Welcome',
+			author: client.username,
+			colour: client.colour,
+			textColour:'black'
 		};
-		io.emit('chat message', obj);
-		socket.emit('login','Enjoy your stay!');
-		io.emit('users',clients);
+		for (var i = clients.length - 1; i >= 0; i--)
+		{
+			client = clients[i];
+			console.log(client['username']);
+			if (client['username'] != 'undefined')
+			{
+				io.to(clients[i]['id']).emit('chat message', obj)
+			}
+		}
+		socket.emit('login', 'Enjoy your stay!');
+		io.emit('users', clients);
 	});
 
-	socket.on('typing',function(data){ 
-		if (data ==true) {
+	socket.on('typing', function(data)
+	{
+		if (data == true)
+		{
 			console.log('its true');
 		}
-		for (var i = clients.length - 1; i >= 0; i--) {
-			if (clients[i]['id'] != socket.id) {
+		for (var i = clients.length - 1; i >= 0; i--)
+		{
+			if (clients[i]['id'] != socket.id)
+			{
 				console.log('sending typing info');
-				io.to(clients[i]['id']).emit('isTyping',{isTyping:data,person:getClient(socket.id).username});
+				io.to(clients[i]['id']).emit('isTyping',
+				{
+					isTyping: data,
+					person: getClient(socket.id).username
+				});
 			}
 		}
 	});
 });
 
-http.listen(3000, function(){
-	console.log('listening on *:3000');
-});
 
 
-function getClient(socid){
-	var client=null;
-	for (var i = clients.length - 1; i >= 0; i--) {
-		if (clients[i]['id'] == socid) {
+function getClient(socid)
+{
+	var client = null;
+	for (var i = clients.length - 1; i >= 0; i--)
+	{
+		if (clients[i]['id'] == socid)
+		{
 			client = clients[i];
 		}
 	};
-	if (client==null){
+	if (client == null)
+	{
 		return false;
 	}
-	else {
+	else
+	{
 		return client;
 	}
 }
 
-function removeClient(socid){
+function removeClient(socid)
+{
 	var client;
-	for (var i = clients.length - 1; i >= 0; i--) {
-		if (clients[i]['id'] == socid) {
+	for (var i = clients.length - 1; i >= 0; i--)
+	{
+		if (clients[i]['id'] == socid)
+		{
 			client = clients[i];
-			clients.splice(i,1);
+			clients.splice(i, 1);
 		}
 	};
-	if (client==null){
+	if (client == null)
+	{
 		return false;
 	}
-	else {
+	else
+	{
 		return client;
 	}
 }
