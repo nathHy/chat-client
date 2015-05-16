@@ -15,10 +15,11 @@ app.get('/', function(req, res){
 	res.sendfile('index.html');
 });
 
-app.get('/user.html',function(req,res){
-	res.sendfile('private.html');
-});
+// app.get('/user.html',function(req,res){
+// 	res.sendfile('private.html');
+// });
 app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 var clients=[];
 var usersTypingById={};
@@ -66,6 +67,9 @@ io.on('connection', function(socket){
 	socket.on('chat message', function(msg){
 		// msg = getClient(socket.id)['username'] + ':' + msg;
 		var user = getClient(socket.id);
+		if (msg == '') {
+			return false;
+		}
 		var obj = {
 			type:'message',
 			time: (new Date().toString()),
@@ -73,10 +77,9 @@ io.on('connection', function(socket){
 			author:user['username'],
 			colour:user['colour']
 		};
-			console.log(obj);
 		history.push(obj);
 		history = history.slice(-100);
-
+		console.log('sending msg');
 		io.emit('chat message', obj);
 
 		// fs.appendFile("/home/user/chatclient/logs/mainChat.log",msg+"\n", function(err){
@@ -111,32 +114,17 @@ io.on('connection', function(socket){
 		io.emit('users',clients);
 	});
 
-	socket.on('typing',function(){ 
-		console.log('id ' + socket.id);
-		var client = getClient(socket.id);
-		client['typing']=true;
-		for (var i = clients.length - 1; i >= 0; i--) {
-			if (clients[i]['typing']){
-				if (usersTypingByName[clients[i]['username']]===undefined) {
-					usersTypingByName.push(getClient(clients[i])['username']);
-				}
-			} else {
-				usersTypingByName.splice(i,1);
-			}
-		};
-		console.log(usersTypingByName);
+	socket.on('typing',function(data){ 
+		if (data ==true) {
+			console.log('its true');
+		}
 		for (var i = clients.length - 1; i >= 0; i--) {
 			if (clients[i]['id'] != socket.id) {
-				io.to(clients[i]['id']).emit('typing',usersTypingByName);
-				console.log('typing');
+				console.log('sending typing info');
+				io.to(clients[i]['id']).emit('isTyping',{isTyping:data,person:getClient(socket.id).username});
 			}
-		};
+		}
 	});
-	socket.on('stoptyping', function() {
-		var client = removeClient(socket.id);
-		client['typing']=false;
-		clients.push(client);
-	})
 });
 
 http.listen(3000, function(){

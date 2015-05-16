@@ -3,7 +3,7 @@
 <head>
     <title>Socket.IO chat</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
     <div id="userlist">
@@ -18,106 +18,18 @@
     <div id='chat'>
         <ul id="messages"></ul>
         <div id='typingList'>
-        <p><p id='listofusers'></p>typing...</p>
+            <span id='updates'>
+
+            </span>
+            <p id='typing' style="display:none">
+                typing...
+            </p>
         </div>
         <form id='chatinput' action="">
           <input id="m" autocomplete="off" /><button>Send</button>
       </form>
   </div>
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-      var socket = io();
-      var username='';
-
-      if (username =='') {
-        console.log('not set');
-        $('#chat').hide();
-    }
-    $('#login').submit(function() {
-        var username=$('#username').val();
-        socket.emit('login', username);
-        $('#username').val('');
-        $('#login').hide();
-        $('#chat').show();
-        return false;
-    });
-    $('#m').keyup(function(){
-        input = $('#m').val()
-        if (input != '') {
-            // console.log(input);
-            socket.emit('typing');
-        } else {
-            socket.emit('stoptyping');
-        }
-    });
-
-    socket.on('send history',function(data){
-        console.log("history is " + data);
-
-    });
-
-    socket.on('typing', function(users){
-        // console.log("Someone is typing. but who? I think it is " + users);
-        var userlist = '';
-        if (users.length >0)
-            $('#typingList').show();
-        else
-            $('#typingList').hide();
-        for (var i = users.length - 1; i >= 0; i--) {
-            userlist += users[i] + ',';
-        };
-        $('#listofusers').replaceWith(userlist);
-    });
-    $('#chatinput').submit(function() {
-        socket.emit('chat message', $('#m').val());
-        $('#m').val('');
-        return false;
-    });
-
-
-
-    socket.on('chat message', function(msg){
-        console.log("message is " + msg);
-        var line = msg.author + ":" + msg.text;
-        if (msg.type == 'system') {
-            addMessage(msg.author,msg.text,msg.colour);
-        } else {
-            addMessage(msg.author,msg.text,msg.colour,msg.time);
-        }
-    });
-
-
-    socket.on('login', function(msg){
-        $('#messages').append($('<li>').text(msg));
-        $('#messages').animate({
-            scrollTop: $('#messages').scrollHeight
-        },300);
-    });
-    socket.on('users',function(list){
-        console.log('Updating online users');
-        $('#online li').remove();
-        for (var i = list.length - 1; i >= 0; i--) {
-            var text = '<a href="user.html"> <li>' + list[i]['username'] + '</li></a>';
-            // console.log(text);
-            $('#online').append(text);
-        };
-    });
-
-    input=$('#m').val();
-    // console.log(input);
-    function addMessage(author,text,colour,time){
-        console.log(author + text + time + colour);
-        if (typeof time === 'undefined') {
-            console.log("showing welcome msg");
-            $('#messages').append('<li> <span style="color:black">' + text + "</span> <span style='color:" + colour + "'>" + author + "</span></li>");    
-        } else {
-            console.log(time);
-            timestamp = time.split(' ');
-            timestamp = timestamp[4];
-            console.log(timestamp);
-            $('#messages').append('<li>' + timestamp +  "<span style='color:" + colour + "'> " +  author + "</span>:" + '<span style="color:black">' + text);
-        }
-    }
-</script>
+    <script type="text/javascript" src="js/frontend.js"></script>
 </body>
 </html>
