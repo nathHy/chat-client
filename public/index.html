@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <div id="userlist">
+        <h1>Online users</h1>
+        <ul id='online'>
+
+        </ul>
+    </div>
+    <form id='login' action="">
+        <input id="username" autocomplete="off"/><button>Login</button>
+    </form>
+    <div id='chat'>
+        <ul id="messages"></ul>
+        <div id='typingList'>
+            <span id='updates'>
+
+            </span>
+            <p id='typing' style="display:none">
+            </p>
+        </div>
+        <form id='chatinput' action="">
+          <input id="m" autocomplete="off" /><button>Send</button>
+      </form>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="js/frontend.js"></script>
+</body>
+</html>

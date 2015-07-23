@@ -14,7 +14,11 @@ $(document).ready(function()
     $('#login').submit(function()
     {
         var username = santize($('#username').val());
-
+        valid = username.indexOf(' ');
+        if (valid != -1) {
+            $('#username').val('Please enter a username without spaces')
+            return false;
+        }
         socket.emit('login', username);
         $('#username').val('');
         $('#login').hide();
@@ -42,7 +46,6 @@ $(document).ready(function()
 
     socket.on("isTyping", function(data)
     {
-        console.log("typing function beg");
         console.log(data);
         if ($("#updates").children().length == 0)
         {
@@ -55,13 +58,9 @@ $(document).ready(function()
         console.log(data.isTyping);
         if (data.isTyping)
         {
-            console.log('istyping is true');
             if ($("#" + data.person + "").length === 0)
             {
-                console.log('data.person length is 0');
-                console.log(data.person);
                 $("#updates").append("<span id='" + data.person + "'>" + data.person + " <span>");
-                console.log("isTyping Function");
                 timeout = setTimeout(timeoutFunction, 5000);
             }
         }
@@ -71,12 +70,10 @@ $(document).ready(function()
         }
         if ($("#updates").children().length == 0)
         {
-            console.log('length is 0, hiding typing')
             $("#typing").css("display", 'none');
         }
         else
         {
-            console.log('length is not 0,showing typing')
             $("#typing").css("display", 'inline');
         }
     });
@@ -107,11 +104,9 @@ $(document).ready(function()
         {
             addMessage(data.author, data.text, data.colour,data.textColour, data.time);
         }
-        console.log('recieving msg');
         $("#" + data.author + "").remove();
         // clearTimeout(timeout);
         // time = setTimeout(timeoutFunction,0);
-        console.log('finishing msg');
     });
 
 
