@@ -20,9 +20,6 @@ $(document).ready(function()
             return false;
         }
         socket.emit('login', username);
-        $('#username').val('');
-        $('#login').hide();
-        $('#chat').show();
         return false;
     });
     $('#m').keyup(function(e)
@@ -110,13 +107,22 @@ $(document).ready(function()
     });
 
 
-    socket.on('login', function(msg)
+    socket.on('login', function(response)
     {
-        $('#messages').append($('<li>').text(msg));
-        $('#messages').animate(
-        {
-            scrollTop: $('#messages').scrollHeight
-        }, 300);
+        msg = response.msg
+        success = response.success
+        if (success) {
+            $('#messages').append($('<li>').text(msg));
+            $('#messages').animate(
+            {
+                scrollTop: $('#messages').scrollHeight
+            }, 300);
+            $('#username').val('');
+            $('#login').hide();
+            $('#chat').show();
+        } else {
+            $('#username').val("The username '" + response.username + "' is taken already")
+        }
     });
 
     socket.on('users', function(list)

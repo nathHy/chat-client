@@ -11,6 +11,10 @@ var path = require('path')
 var fs = require('fs');
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/hello', function(req, res)
+{
+	res.write('hello')
+});
 app.get('/', function(req, res)
 {
 	res.sendfile('public/index.html');
@@ -82,6 +86,8 @@ io.on('connection', function(socket)
 			return false;
 		}
 
+		PM=false;
+
 		if (msg.indexOf("W:") == 0 ) {
 			targetUser = msg.slice(2,msg.search(/\s/));//slice after W: but before the first space.
 			croppedMsg = msg.slice(msg.search(/\s/)+1);//slice after first space
@@ -115,6 +121,7 @@ io.on('connection', function(socket)
 			if (targetID) {
 				console.log('Sending msg to ', targetID['id'])
 				io.to(targetID['id']).emit('chat message',obj);
+				io.to(socket.id).emit('chat message',obj)
 			}
 		} else {
 			io.emit('chat message', obj);
@@ -134,9 +141,9 @@ socket.on('login', function(user,fn)
 	console.log('login is : ' + user + ' with socket id ' + socket.id);
 	valid = validateUserName(user);
 	if (!valid) {
-		console.log('login failed')
+		console.log('login failed for ',socket.id, ' ',user)
+		socket.emit('login',{success:false,msg:"username taken already",username:user})
 		return false;
-		fn({result:false});
 	}
 	colour = colours.shift();
 	colours.push(colour);
@@ -164,7 +171,7 @@ socket.on('login', function(user,fn)
 			io.to(clients[i]['id']).emit('chat message', obj)
 		}
 	}
-	socket.emit('login', 'Enjoy your stay!');
+	socket.emit('login', {success:true,msg:'Enjoy your stay!'});
 	io.emit('users', clients);
 });
 
@@ -196,7 +203,8 @@ function validateUserName(user)
 	}
 	for (var i = clients.length - 1; i >= 0; i--)
 	{
-		if (clients[i]['name'] == user)
+		console.log(clients[i]['username'])
+		if (clients[i]['username'] == user)
 		{
 			return false;
 		}
