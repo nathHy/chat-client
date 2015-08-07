@@ -7,10 +7,21 @@
 </head>
 <body>
     <div id="userlist">
-        <h1>Online users</h1>
-        <ul id='online'>
+        <div id='chatrooms'>
+            <h1>Chat rooms:</h1>
+            <span id='current_room'>a</span>
+            <ul id='rooms'>
+                <a href="" class="roomname"><li>Test1</li></a>
+                <a href="" class="roomname"><li>Test2</li></a>
+                <a href="" class="roomname"><li>Test3</li></a>
+            </ul>
+        </div>
+        <div>
+            <h1>Online users</h1>
+            <ul id='online'>
 
-        </ul>
+            </ul>
+        </div>
     </div>
     <form id='login' action="">
         <input id="username" autocomplete="off"/><button>Login</button>
@@ -18,11 +29,8 @@
     <div id='chat'>
         <ul id="messages"></ul>
         <div id='typingList'>
-            <span id='updates'>
-
-            </span>
-            <p id='typing' style="display:none">
-            </p>
+            <span id='updates'> </span>
+            <p id='typing' style="display:none"> </p>
         </div>
         <form id='chatinput' action="">
           <input id="m" autocomplete="off" /><button>Send</button>

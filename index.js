@@ -32,9 +32,6 @@ http.listen(3000, function()
 
 
 var clients = [];
-var usersTypingById = {};
-var usersTypingByName = [];
-
 
 var history = [];
 
@@ -77,9 +74,10 @@ io.on('connection', function(socket)
 	});
 
 
-	socket.on('chat message', function(msg)
+	socket.on('chat message', function(data)
 	{
-		// msg = getClient(socket.id)['username'] + ':' + msg;
+		msg=data.msg
+		room=data.room
 		var user = getClient(socket.id);
 		if (msg == '')
 		{
@@ -124,17 +122,22 @@ io.on('connection', function(socket)
 				io.to(socket.id).emit('chat message',obj)
 			}
 		} else {
-			io.emit('chat message', obj);
+			io.sockets.in(room).emit('chat message', obj);
 		}
-
-		// fs.appendFile("/home/user/chatclient/logs/mainChat.log",msg+"\n", function(err){
-		// 	if (err){
-		// 		return console.log(err);
-		// 	}
-		// 	console.log('the file was saved');
-		// })
 });
 
+
+socket.on('join room', function (room) {
+	console.log('join room - ' + room)
+	socket.join(room);
+	socket.rooms[room]=room;
+});
+
+socket.on('leave room', function (room) {
+	console.log('leaving room - ' + room)
+	socket.leave(room);
+	delete socket.room[room];
+});
 
 socket.on('login', function(user,fn)
 {
@@ -142,7 +145,7 @@ socket.on('login', function(user,fn)
 	valid = validateUserName(user);
 	if (!valid) {
 		console.log('login failed for ',socket.id, ' ',user)
-		socket.emit('login',{success:false,msg:"username taken already",username:user})
+		socket.emit('login',{success:false,response:"username taken already",username:user})
 		return false;
 	}
 	colour = colours.shift();
@@ -150,7 +153,6 @@ socket.on('login', function(user,fn)
 	client = {
 		id: socket.id,
 		username: user,
-		typing: false,
 		colour: colour
 	};
 	clients.push(client);
@@ -171,30 +173,32 @@ socket.on('login', function(user,fn)
 			io.to(clients[i]['id']).emit('chat message', obj)
 		}
 	}
-	socket.emit('login', {success:true,msg:'Enjoy your stay!'});
+	socket.emit('login', {success:true,response:'Enjoy your stay!'});
 	io.emit('users', clients);
 });
 
-socket.on('typing', function(data)
-{
-	if (data == true)
-	{
-		console.log('its true');
-	}
-	for (var i = clients.length - 1; i >= 0; i--)
-	{
-		if (clients[i]['id'] != socket.id)
-		{
-			// console.log('sending typing info');
-			io.to(clients[i]['id']).emit('isTyping',
-			{
-				isTyping: data,
-				person: getClient(socket.id).username
-			});
-		}
-	}
-});
-});
+
+socket.on('join room', function(room) {
+	console.log("Request to join room ", room, "from socket", socket.id)
+	socket.join(room);
+	client=getClient(socket.id)
+	console.log(client.username)
+	socket.emit('room joined', {success:true,data:{message:'Welcome to ' + room}})
+	var obj = {
+		type: 'system',
+		time: (new Date().toString()),
+		text: 'Welcome to ' + room,
+		author: client.username,
+		colour: client.colour,
+		textColour:'black'
+	};
+	socket.to(room).emit("chat message", obj)
+})
+
+
+
+}); // end socket.
+
 
 function validateUserName(user) 
 {

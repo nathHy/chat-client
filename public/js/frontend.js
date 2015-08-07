@@ -3,8 +3,9 @@ $(document).ready(function()
 
     var socket = io();
     var username = '';
-    var typing = false;
     var timeout = undefined;
+    
+    var currentRoom=''
 
     if (username == '')
     {
@@ -22,71 +23,23 @@ $(document).ready(function()
         socket.emit('login', username);
         return false;
     });
-    $('#m').keyup(function(e)
-    {
-        if (e.which !== 13)
-        {
-            if (typing === false && $("#m").is(":focus") || $('#m').val() != '')
-            {
-                typing = true;
-                socket.emit("typing", true);
-                console.log("typing!");
-            }
-            else
-            {
-                clearTimeout(timeout);
-                timeout = setTimeout(timeoutFunction, 5000);
-                console.log("reset timeout");
-            }
-        }
-    });
-
-    socket.on("isTyping", function(data)
-    {
-        console.log(data);
-        if ($("#updates").children().length == 0)
-        {
-            $("#typing").css("display", 'none');
-        }
-        else
-        {
-            $("#typing").css("display", 'inline');
-        }
-        console.log(data.isTyping);
-        if (data.isTyping)
-        {
-            if ($("#" + data.person + "").length === 0)
-            {
-                $("#updates").append("<span id='" + data.person + "'>" + data.person + " <span>");
-                timeout = setTimeout(timeoutFunction, 5000);
-            }
-        }
-        else
-        {
-            $("#" + data.person + "").remove();
-        }
-        if ($("#updates").children().length == 0)
-        {
-            $("#typing").css("display", 'none');
-        }
-        else
-        {
-            $("#typing").css("display", 'inline');
-        }
-    });
-
-    // socket.on('send history',function(data){
-    //     console.log("history is " + data);
-
-    // });
-
+    
     $('#chatinput').submit(function()
     {
-        socket.emit('chat message', $('#m').val());
+        msg=$('#m').val()
+        if (msg.indexOf("/") == 0) {
+            if (msg.indexOf("join")==1) {
+                room=msg.slice(5)
+                console.log("Joining room ",room)
+                socket.emit("join room",room)
+                return false
+            }
+        } else { 
+            socket.emit('chat message',{room:currentRoom,msg:msg} );
+        }
         $('#m').val('');
         return false;
     });
-
 
 
     socket.on('chat message', function(data)
@@ -109,7 +62,7 @@ $(document).ready(function()
 
     socket.on('login', function(response)
     {
-        msg = response.msg
+        msg = response.response
         success = response.success
         if (success) {
             $('#messages').append($('<li>').text(msg));
@@ -137,6 +90,11 @@ $(document).ready(function()
         };
     });
 
+    socket.on('joined room',function(response) {
+        if (response.success==true) {
+            addMessage('system',response.data.msg,black,red)
+        }
+    })
 
     $(document).on('click', '.privateusername', function(e)
     {
@@ -144,6 +102,19 @@ $(document).ready(function()
         console.log("adding text");
         var user = e.currentTarget.id;
         $("#m").val('W:' + user);
+    });
+    
+    $(document).on('click', '.roomname', function(e)
+    {
+        e.preventDefault();
+        console.log(e)
+        console.log("selecting room")
+        var room = e.currentTarget.textContent;
+        console.log('room is ', room)
+        $("#current_room").text("Current room:" + room)
+        $("#current_room").val("Current room:" + room)
+        socket.emit('join room', room)
+        currentRoom=room
     });
 
 
@@ -173,8 +144,8 @@ function santize(input)
     return output;
 }
 
-function timeoutFunction()
+function setCurrentRoom(e)
 {
-    typing = false;
-    socket.emit("typing", false);
+    
+    console.log(e);
 }
