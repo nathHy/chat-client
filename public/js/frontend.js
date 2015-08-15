@@ -1,4 +1,4 @@
-$(document).ready(function()
+$(document).ready(function ()
 {
 
     var socket = io();
@@ -12,19 +12,19 @@ $(document).ready(function()
         console.log('not set');
         $('#chat').hide();
     }
-    $('#login').submit(function()
+    $('#login').submit(function ()
     {
         var username = santize($('#username').val());
         valid = username.indexOf(' ');
         if (valid != -1) {
             $('#username').val('Please enter a username without spaces')
             return false;
-        }
+        }   
         socket.emit('login', username);
         return false;
     });
     
-    $('#chatinput').submit(function()
+    $('#chatinput').submit(function ()
     {
         msg=$('#m').val()
         if (msg.indexOf("/") == 0) {
@@ -42,7 +42,7 @@ $(document).ready(function()
     });
 
 
-    socket.on('chat message', function(data)
+    socket.on('chat message', function (data)
     {
         console.log("message is " + data);
         var line = data.author + ":" + data.text;
@@ -60,7 +60,7 @@ $(document).ready(function()
     });
 
 
-    socket.on('login', function(response)
+    socket.on('login', function (response)
     {
         msg = response.response
         success = response.success
@@ -73,12 +73,14 @@ $(document).ready(function()
             $('#username').val('');
             $('#login').hide();
             $('#chat').show();
+            socket.emit('join room', 'general');
+            currentRoom='general';
         } else {
             $('#username').val("The username '" + response.username + "' is taken already")
         }
     });
 
-    socket.on('users', function(list)
+    socket.on('users', function (list)
     {
         console.log('Updating online users');
         $('#online li').remove();
@@ -90,13 +92,27 @@ $(document).ready(function()
         };
     });
 
-    socket.on('joined room',function(response) {
+    socket.on('joined room',function (response) {
         if (response.success==true) {
             addMessage('system',response.data.msg,black,red)
         }
     })
 
-    $(document).on('click', '.privateusername', function(e)
+    socket.on('send rooms', function(rooms) {
+        console.log(rooms); // TODO. Sending blank array down??
+        for (var i = rooms.length - 1; i >= 0; i--) {
+        $('#rooms').append('<a href="" id="' + room[i] + '" class="inactive room"><li>' + room[i] + ' </li></a>');  
+        };
+        console.log('rooms updated')
+    });
+
+
+
+
+
+
+
+    $(document).on('click', '.privateusername', function (e)
     {
         e.preventDefault();
         console.log("adding text");
@@ -104,19 +120,31 @@ $(document).ready(function()
         $("#m").val('W:' + user);
     });
     
-    $(document).on('click', '.roomname', function(e)
-    {
-        e.preventDefault();
-        console.log(e)
-        console.log("selecting room")
-        var room = e.currentTarget.textContent;
-        console.log('room is ', room)
-        $("#current_room").text("Current room:" + room)
-        $("#current_room").val("Current room:" + room)
-        socket.emit('join room', room)
-        currentRoom=room
+    // $(document).on('click', '.room', function (e)
+    // {
+    //     e.preventDefault();
+    //     console.log(e)
+    //     console.log("selecting room")
+    //     var room = e.currentTarget.textContent;
+        
+    //     console.log('room is ', room)
+    //     $("#current_room").text("Current room:" + room)
+    //     $("#current_room").val("Current room:" + room)
+    //     socket.emit('join room', room)
+    //     currentRoom=room
+    // });
+    
+    $('.room').click(function () { 
+        $('.room').each(function (index) {
+                $(this).addClass('inactive')
+                $(this).removeClass('active')
+        } );
+        $(this).removeClass('inactive');
+        $(this).addClass('active');
+        activeRoom=$(this);
+        return false;
     });
-
+    
 
 
 });

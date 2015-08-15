@@ -71,3 +71,12 @@ form button {
 	text-decoration: underline;
 	font-weight: bold;
 }
+
+
+.active {
+	font-weight: bold;
+}
+
+.inactive {
+	font-weight: normal;
+}
