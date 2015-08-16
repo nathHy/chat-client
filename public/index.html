@@ -6,25 +6,29 @@
     <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
-    <div id="userlist">
+    <div id="sidebar">
         <div id='chatrooms'>
-            <h1>Chat rooms:</h1>
-            <span id='current_room'>a</span>
+            <h1>Rooms</h1>
+            <span id='current_room'></span>
             <ul id='rooms'>
-                <!-- <a href="" id="general" class="active room"><li>General</li></a>
-                <a href="" class="inactive room"><li>Test</li></a>
-                <a href="" class="inactive room"><li></li></a> -->
             </ul>
         </div>
-        <div>
-            <h1>Online users</h1>
+
+        <div id='userlist'>
+            <h1>Users</h1>
             <ul id='online'>
 
             </ul>
         </div>
+        <div id="control">
+            <form id="joinRoomForm" onsubmit="$('#joinRoom').click();return false;" action="">
+                <input id="roomInput" autocomplete="off" name="roomInput" />
+                <button id="joinRoom" class='button'>Join Room</button>
+            </form>
+        </div>
     </div>
-    <form id='login' action="">
-        <input id="username" autocomplete="off"/><button>Login</button>
+    <form class="mainForm" id='login' action="">
+        <input id="username" name='username' autocomplete="off"/><button>Login</button>
     </form>
     <div id='chat'>
         <ul id="messages"></ul>
@@ -32,11 +36,14 @@
             <span id='updates'> </span>
             <p id='typing' style="display:none"> </p>
         </div>
-        <form id='chatinput' action="">
-          <input id="m" autocomplete="off" /><button>Send</button>
+        <form class="mainForm" id='chatinput' action="">
+          <input id="m" name='inputarea'  autocomplete="off" /><button>Send</button>
       </form>
   </div>
+
+
+
   <script src="/socket.io/socket.io.js"></script>
-    <script type="text/javascript" src="js/frontend.js"></script>
+  <script type="text/javascript" src="js/frontend.js"></script>
 </body>
 </html>

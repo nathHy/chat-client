@@ -1,0 +1,13 @@
+{
+  "apps" : [{
+    "name"        : "chat-client",
+    "script"      : "/home/user/chatclient/app.js",
+    "watch"       : "/home/user/chatclient/",
+    "watch_options": {
+    	"usePolling":true,
+    	"useFsEvents":false,
+    	"atomic":false
+    },
+    "log_date_format"  : "YYYY-MM-DD HH:mm Z"
+  }]
+}

@@ -11,6 +11,7 @@ $(document).ready(function ()
     {
         console.log('not set');
         $('#chat').hide();
+        $('input[name="username"]').focus()
     }
     $('#login').submit(function ()
     {
@@ -20,6 +21,7 @@ $(document).ready(function ()
             $('#username').val('Please enter a username without spaces')
             return false;
         }   
+        setTimeout(function() {$('input[name="inputarea"]').focus()},100); // Delay needed as the element is hidden
         socket.emit('login', username);
         return false;
     });
@@ -28,13 +30,13 @@ $(document).ready(function ()
     {
         msg=$('#m').val()
         if (msg.indexOf("/") == 0) {
-            if (msg.indexOf("join")==1) {
-                room=msg.slice(5)
-                console.log("Joining room ",room)
-                socket.emit("join room",room)
+            if (msg.indexOf("joinroom")==1) {
+                room=msg.slice(msg.indexOf(' ')+1)
+                joinRoom(room);
                 return false
             }
         } else { 
+            console.log('sending msg to ', currentRoom)
             socket.emit('chat message',{room:currentRoom,msg:msg} );
         }
         $('#m').val('');
@@ -44,7 +46,6 @@ $(document).ready(function ()
 
     socket.on('chat message', function (data)
     {
-        console.log("message is " + data);
         var line = data.author + ":" + data.text;
         if (data.type == 'system')
         {
@@ -52,13 +53,12 @@ $(document).ready(function ()
         }
         else
         {
+            console.log("Recieved msg in room: ",data.room)
             addMessage(data.author, data.text, data.colour,data.textColour, data.time);
         }
-        $("#" + data.author + "").remove();
         // clearTimeout(timeout);
         // time = setTimeout(timeoutFunction,0);
     });
-
 
     socket.on('login', function (response)
     {
@@ -73,8 +73,17 @@ $(document).ready(function ()
             $('#username').val('');
             $('#login').hide();
             $('#chat').show();
-            socket.emit('join room', 'general');
-            currentRoom='general';
+            socket.emit('join room', 'general',function(response) {
+                console.log('Response from joining room is',response)
+                if (response.success) {
+                    console.log('successfully joined room general')
+                    setCurrentRoom('general');
+                    console.log('current room is ', currentRoom)
+
+                } else {
+                    // TODO Error handler
+                }
+            });
         } else {
             $('#username').val("The username '" + response.username + "' is taken already")
         }
@@ -83,7 +92,7 @@ $(document).ready(function ()
     socket.on('users', function (list)
     {
         console.log('Updating online users');
-        $('#online li').remove();
+        // $('#online li').remove();
         for (var i = list.length - 1; i >= 0; i--)
         {
             var text = '<a href="" class="privateusername" id="' + list[i]['username'] + '"> <li>' + list[i]['username'] + '</li></a>';
@@ -92,62 +101,52 @@ $(document).ready(function ()
         };
     });
 
-    socket.on('joined room',function (response) {
-        if (response.success==true) {
-            addMessage('system',response.data.msg,black,red)
-        }
-    })
-
     socket.on('send rooms', function(rooms) {
         console.log(rooms); // TODO. Sending blank array down??
-        for (var i = rooms.length - 1; i >= 0; i--) {
-        $('#rooms').append('<a href="" id="' + room[i] + '" class="inactive room"><li>' + room[i] + ' </li></a>');  
-        };
+        // for (var i = rooms.length - 1; i >= 0; i--) {
+        // $('#rooms').append('<a href="" id="' + rooms[i] + '" class="inactive room"><li>' + rooms[i] + ' </li></a>');  
+        // };
+        $('#rooms').children().remove();
+
+        for (room in rooms) {
+            console.log(currentRoom,room);
+            if (room == currentRoom) {
+                anchorClass='active'
+            }
+            else {
+                anchorClass='inactive'
+            }
+            $('#rooms').append('<a href="" id="' + room + '" class="' + anchorClass + ' room" onclick="return false"><li>' + room + ' </li></a>');  
+        }
         console.log('rooms updated')
     });
 
 
 
-
-
-
-
-    $(document).on('click', '.privateusername', function (e)
-    {
-        e.preventDefault();
-        console.log("adding text");
-        var user = e.currentTarget.id;
-        $("#m").val('W:' + user);
-    });
-    
-    // $(document).on('click', '.room', function (e)
+    // $(document).on('click', '.privateusername', function (e)
     // {
     //     e.preventDefault();
-    //     console.log(e)
-    //     console.log("selecting room")
-    //     var room = e.currentTarget.textContent;
-        
-    //     console.log('room is ', room)
-    //     $("#current_room").text("Current room:" + room)
-    //     $("#current_room").val("Current room:" + room)
-    //     socket.emit('join room', room)
-    //     currentRoom=room
+    //     console.log("adding text");
+    //     var user = e.currentTarget.id;
+    //     $("#m").val('W:' + user);
     // });
-    
-    $('.room').click(function () { 
-        $('.room').each(function (index) {
-                $(this).addClass('inactive')
-                $(this).removeClass('active')
-        } );
-        $(this).removeClass('inactive');
-        $(this).addClass('active');
-        activeRoom=$(this);
-        return false;
-    });
-    
 
-
+$('#rooms').on('click','.room',function () { 
+    removeActiveRoom()
+    setCurrentRoom($(this).attr('id'));
+    return false; //prevents reload of page.
 });
+
+$('#joinRoom').click(function() {
+    var room = $('#roomInput').val();
+    joinRoom(room);
+    return false;
+});
+
+function removeActiveRoom() {
+    $('.active').removeClass('active');
+}
+
 
 function addMessage(author, text, colour,textColour, time)
 {
@@ -172,8 +171,25 @@ function santize(input)
     return output;
 }
 
-function setCurrentRoom(e)
+function setCurrentRoom(room)
 {
-    
-    console.log(e);
+    currentRoom=room
+    $('#'+currentRoom).removeClass('inactive');
+    $('#'+currentRoom).addClass('active');
+    console.log("Current room is now " + room);
+    $("#current_room").text(currentRoom);
 }
+
+function joinRoom(room) {
+    socket.emit("join room",room,function(response) {
+        if (response.success) {
+            console.log('successfully joined room ' + room)
+            setCurrentRoom(room);
+    } else {
+        // TODO Error handler
+    }
+    })
+}
+
+});
+
