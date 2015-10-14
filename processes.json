@@ -1,13 +1,14 @@
 {
   "apps" : [{
     "name"        : "chat-client",
-    "script"      : "/home/user/chatclient/app.js",
-    "watch"       : "/home/user/chatclient/",
+    "script"      : "app.js",
+    "watch"       : "true",
     "watch_options": {
     	"usePolling":true,
-    	"useFsEvents":false,
-    	"atomic":false
+    	"useFsEvents":false
     },
-    "log_date_format"  : "YYYY-MM-DD HH:mm Z"
+    "log_date_format"  : "YYYY-MM-DD HH:mm Z",
+    
+    "exec_mode": "fork_mode"
   }]
 }

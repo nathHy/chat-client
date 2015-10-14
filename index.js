@@ -2,149 +2,53 @@
 // Another tutorial http://ahoj.io/nodejs-and-websocket-simple-chat-tutorial
 // ^^ has history along with colours. 
 // http://www.tamas.io/further-additions-to-the-node-jssocket-io-chat-app/
-/*
-	READ THIS
-	This provides a lot of info on the namespace. 
-	Clients. rooms etc. 
-	INVESTIGATE
-	Use to find list of clients.
-	console.log(io.of("/"))
-	
-	
-	
-*/
-// Modules
-var app        = require('express')();
-var express    = require('express');
-var http       = require('http').Server(app);
-var io         = require('socket.io')(http);
-var path       = require('path')
-var fs         = require('fs');
-var bodyParser = require('body-parser')
+// 
+var app = require('express')();
+var express = require('express');
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+var path = require('path')
+var fs = require('fs');
 
-//Routes for Express
-var routes   = require('./app/routes/routes')
-var users    = require('./app/routes/users')
-var api      = require('./app/routes/api')
-var login    = require('./app/routes/login')
-var register = require('./app/routes/register')
-d = new Date();
-console.log(d)
-// Env Variables
-var PORT = '3000';
-
-
-var chokidar = require('chokidar');
-var watcher = chokidar.watch('current directory', {
-  ignored: /[\/\\]\.|node_modules/, 
-  persistent: true,
-  ignoreInitial : true
-}).on('all', function(event, path) {
-  console.log(event, path);
-});
-
-
-// Mongo DB stuff
-var mongoose = require('mongoose');
-var User     = require('./app/models/userSchema');
-
-
-mongoose.connect('mongodb://localhost/chatclient')
-var db = mongoose.connection;
-db.on('error', console.error.bind(console,'connection error:'));
-db.once('open',function(callback){
-	// yay?
-});
-
-
-
-// var User = mongoose.model('User', userSchema)
-
-// var bob = new User({name:'bob',email:'a@b.com',password:'woops'})
-// bob.save(function(err,bob) {
-// 	if (err) return console.error(err);
-// 	console.log('saving bob',bob)
-// });
-
-
-// User.remove({},function(){});
-
-// User.find(function(err,users) {
-// 	if (err) return console.error(err);
-// 	console.log('users are:',users)
-// });
-
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/',routes);
-app.use('/user',users);
-app.use('/register',register);
-app.use('/login',login);
-app.use('/api',api);
-
 app.get('/hello', function(req, res)
 {
 	res.write('hello')
 });
-
-app.get('/login', function(req, res)
-{
-	res.sendfile('public/login.html')
-});
-
-
-// app.post('/user',function (req,res) {
-// 	console.log("Got a register request")
-// 	var data = {
-// 		"success":"",
-// 		"message":""
-// 	}
-// 	// console.log(req,res)
-// 	var user = req.body.username;
-// 	var pass = req.body.password;
-// 	var newUser = new User({
-// 		username:user,
-// 		name:user,
-// 		password:pass
-// 	});
-
-// 	console.log(user,pass)
-// 	newUser.save(function (err,newUser) {
-// 		if(err) { 
-// 			console.error(err);
-// 			data.success=false;
-// 			data.message="Failed to register user";
-// 			res.json(data);
-// 		}
-// 		console.log("Saving user:",newUser)
-// 		data.success=true;
-// 		data.message="Succesfully registered user";
-// 		res.json(data);
-// 	}) 
-// });
-
 app.get('/', function(req, res)
 {
 	res.sendfile('public/index.html');
 });
 
-http.listen(PORT, function()
+// app.get('/user.html',function(req,res){
+// 	res.sendfile('private.html');
+// });
+// app.use(express.static(path.join(__dirname, 'public')));
+
+http.listen(3000, function()
 {
-	console.log('listening on *:',PORT);
+	console.log('listening on *:3000');
 });
 
-console.log("Defining global vars");
+
 var clients = [];
 
 var history = [];
 
-var colours = ['red', 'blue', 'green', 'cyan', 'pink', 'orange'];
+var colours = ['ff8400', 'ff8400', 'ff8400', 'ff8400', 'ff8400', 'ff8400'];
 
-var rooms = {};
+var rooms = [];
 
 io.on('connection', function(socket)
 {
 	console.log('a user connected');
+	// fs.readFile('/home/user/chatclient/logs/mainChat.log',function read(err,data){
+	// 	if (err){
+	// 		return console.log(err);
+	// 	}
+	// 	var history = data;
+	// socket.emit('send history',history)
+
 
 	socket.on('disconnect', function()
 	{
@@ -175,8 +79,7 @@ io.on('connection', function(socket)
 	{
 		msg=data.msg
 		room=data.room
-		var user = getClient(socket.id); 
-		// displayInfo();
+		var user = getClient(socket.id);
 		if (msg == '')
 		{
 			return false;
@@ -187,28 +90,23 @@ io.on('connection', function(socket)
 			text: msg,
 			author: user['username'],
 			colour: user['colour'],
-			textColour:'black',
-			room:room
+			textColour:'black'
 		};
 		console.log('sending msg: ' + msg + ' to room: ' + room);
 		io.sockets.in(room).emit('chat message', obj);
 	});
 
 
-	socket.on('join room', function (room,fn) {
-		console.log('Request from',socket.id,'to join room - ', room)
-		if (socket.rooms[room] !== undefined) {
-			fn({success:false,msg:"Already in room:" + room})
-			return false;
-		}
+	socket.on('join room', function (room) {
+		console.log('join room - ' + room)
 		socket.join(room);
 		socket.rooms[room]=room;
 		if (rooms[room] === undefined) {
 			rooms[room]=room
 		}
+		console.log(rooms)
 		io.emit('send rooms', rooms)
-		fn({success:true});
-		console.log('Rooms have been sent to ',socket.id)
+		console.log('sent rooms')
 	});
 	
 	socket.on('leave room', function (room) {
@@ -349,17 +247,4 @@ function dump(obj) {
         out += i + ": " + obj[i] + "\n";
     }
     console.log(out);
-}
-
-function displayInfo() {
-	var namespace = '/';
-	var roomName = 'general';
-	console.log("Adapter rooms")
-	console.log(io.nsps[namespace].adapter.rooms)
-	console.log()
-	console.log('Looping over rooms')
-	for (var room in io.nsps[namespace].adapter.rooms) {
-		console.log('Room is ',room)
-	    for (var socketId in io.nsps[namespace].adapter.rooms[room])
-	    	console.log('Connected Client is : ',getClient(socketId).username)	}
 }
