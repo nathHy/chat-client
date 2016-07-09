@@ -52,9 +52,6 @@ var User     = require('./app/models/userSchema');
 mongoose.connect('mongodb://localhost/chatclient')
 var db = mongoose.connection;
 db.on('error', console.error.bind(console,'connection error:'));
-db.once('open',function(callback){
-	// yay?
-});
 
 
 
@@ -176,7 +173,6 @@ io.on('connection', function(socket)
 		msg=data.msg
 		room=data.room
 		var user = getClient(socket.id); 
-		// displayInfo();
 		if (msg == '')
 		{
 			return false;

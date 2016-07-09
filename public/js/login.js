@@ -7,12 +7,12 @@ $("#loginButton").click(function() {
 	console.log('Logining in')
 	formData = getForm();
 	console.log(formData)
-	$.post('http://10.20.30.100:3000/login',formData,function (data){
+	$.post('/login',formData,function (data){
 		console.log(data)
 		if (data.success)
 		{
-			// alert(data.message)
-			window.location = "http://10.20.30.100:3000";
+			window.localStorage.setItem("username",formData.username);
+			window.location = "/";
 		} else {
 			alert(data.message);
 		}
@@ -26,13 +26,13 @@ $("#registerButton").click(function() {
 	console.log('registering')
 	formData = getForm();
 	console.log(formData)
-	$.post('http://10.20.30.100:3000/user',formData,function (data){
+	$.post('/user',formData,function (data){
 		console.log(data)
 		if (data.success)
 		{
-			alert(data.message)
+			$("#responseMessage").text(data.message);
 		} else {
-			alert(data.message);
+			$("#responseMessage").text(data.message);
 		}
 	})
 })

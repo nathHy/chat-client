@@ -2,16 +2,18 @@ $(document).ready(function ()
 {
 
     var socket = io();
-    var username = '';
+    var username = window.localStorage.getItem("username");
     var timeout = undefined;
     
     var currentRoom=''
 
-    if (username == '')
+    if (username == '' || username == undefined)
     {
         console.log('not set');
         $('#chat').hide();
         $('input[name="username"]').focus()
+    } else {
+        socket.emit('login', username);
     }
     $('#login').submit(function ()
     {
